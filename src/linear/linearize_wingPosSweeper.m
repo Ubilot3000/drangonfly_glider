@@ -1,5 +1,5 @@
-function linearize_massSweeper()
-    function [eigens, omega_nats, damping_ratios] = findEigenvalues(in_x_mass)
+function linearize_wingPosSweeper()
+    function [eigens, omega_nats, damping_ratios] = findEigenvalues(in_x_mass, delta_wing)
         % --- Environmental Parameters ---
         p.g = 9.81;
         p.rho = 1.225;
@@ -15,11 +15,11 @@ function linearize_massSweeper()
     
         % Front wing
         c.m_f_wing = 0.004;
-        c.x_f_wing = 0.085;
+        c.x_f_wing = 0.085;% in_x_f_wing; % 0.085;
     
         % Back wing
         c.m_r_wing = 0.006;            
-        c.x_r_wing = 0.140;
+        c.x_r_wing = c.x_f_wing + delta_wing; %in_x_f_wing + 0.055; % 0.140
     
         % Rudder
         c.m_rudder = 0.002;            
@@ -102,39 +102,75 @@ function linearize_massSweeper()
         omega_nats = abs(eigs_A);
         damping_ratios = -real(eigs_A) ./ omega_nats;  % Element-wise division
         
+        % Sorting values for consistency
+        [omega_nats, sort_idx] = sort(omega_nats);
+        eigs_A = eigs_A(sort_idx);
+        damping_ratios = damping_ratios(sort_idx);
+
         % Collecting return values
         eigens = eigs_A(select_idxs);
         omega_nats = omega_nats(select_idxs);
         damping_ratios = damping_ratios(select_idxs);
     end
 
-    % Setup iterations
-    x_max = 0.200;
-    x_min = 0.000;
-    num_stations = 45;
-    all_x_mass = linspace(x_min, x_max, num_stations);
+    % Setup mass iterations
+    x_mass_max = 0.100;
+    x_mass_min = 0.000;
+    num_stations_mass = 30;
+    all_x_mass = linspace(x_mass_min, x_mass_max, num_stations_mass);
 
-    % Initialize plot
-    figure('Position', [100, 100, 1000, 500]);
-    subplot(1, 2, 1); hold on;
-    title('Natural Frequency vs Mass Position');
-    ylabel('\omega_n (rad/s)'); xlabel('x_{mass} (mm)');
-    grid on;
+    % Setup wing iterations
+    delta_wing_max = 0.010;
+    delta_wing_min = 0.150;
+    num_stations_wing = num_stations_mass;
+    all_delta_wing = linspace(delta_wing_min, delta_wing_max, num_stations_wing);
 
-    subplot(1, 2, 2); hold on;
-    title('Damping Ratio vs Mass Position');
-    ylabel('\zeta'); xlabel('x_{mass} (mm)');
-    grid on;
-
-    for j = 1:num_stations
-        in_x_mass = all_x_mass(j);
-            [eigens, omega_nats, damping_ratios] = findEigenvalues(in_x_mass);
-            
-            % Plot each eigenvalue mode for this x_mass
-            subplot(1, 2, 1);
-            scatter(in_x_mass * ones(size(omega_nats)) * 1000, omega_nats, 'filled');
-
-            subplot(1, 2, 2);
-            scatter(in_x_mass * ones(size(damping_ratios)) * 1000, damping_ratios, 'filled');
+    % --- Preallocate matrix for phugoid damping ratios ---
+    Z = NaN(num_stations_wing, num_stations_mass);  % Z(row: delta_wing, col: x_mass)
+    
+    % --- Fill Z matrix with phugoid damping values ---
+    for r = 1:num_stations_wing
+        in_delta_wing = all_delta_wing(r);
+        for j = 1:num_stations_mass
+            in_x_mass = all_x_mass(j);
+            [~, omega_nats, damping_ratios] = findEigenvalues(in_x_mass, in_delta_wing);
+    
+            % Check if valid result
+            if length(omega_nats) ~= 2
+                continue;
+            end
+    
+            % Assign mode indices based on frequency
+            if omega_nats(1) > omega_nats(2)
+                short_idx = 1;
+                phugoid_idx = 2;
+            else
+                short_idx = 2;
+                phugoid_idx = 1;
+            end
+    
+            % Store damping ratio into matrix
+            Z(r, j) = damping_ratios(phugoid_idx);
+        end
     end
+    
+    % --- Generate surface plot ---
+    [X, Y] = meshgrid(all_x_mass, all_delta_wing);  % X = mass, Y = delta_wing
+    
+    figure('Position', [100, 100, 1000, 500]);
+    hold on;
+    surf(X, Y, Z);                 % 3D surface
+    % Z_zero = zeros(size(Z));
+    % surf(X, Y, Z_zero,'FaceColor', [1, 0.2, 0.2], 'EdgeColor', 'k', 'FaceAlpha', 0.5, 'DisplayName', 'z = 0 plane');
+    hold off;
+    shading flat;                % smooth shading
+    colorbar;                      % adds color scale bar
+    clim([min(Z(~isnan(Z))), max(Z(~isnan(Z)))]);                 % optional: fix color scale
+    
+    xlabel('x_{mass} (m)');
+    ylabel('\delta_{wing} (m)');
+    zlabel('\zeta_{phugoid}');
+    title('Phugoid Damping vs Mass and Wing Separation');
+    view(45, 30);                  % adjust view angle
+    grid on;
 end
