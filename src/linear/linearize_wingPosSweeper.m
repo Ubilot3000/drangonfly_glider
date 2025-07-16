@@ -1,5 +1,5 @@
 function linearize_wingPosSweeper()
-    function [eigens, omega_nats, damping_ratios] = findEigenvalues(in_x_mass, delta_wing)
+    function [eigens, omega_nats, damping_ratios, x_cg] = findEigenvalues(in_x_mass, delta_wing)
         % --- Environmental Parameters ---
         p.g = 9.81;
         p.rho = 1.225;
@@ -10,7 +10,7 @@ function linearize_wingPosSweeper()
         c.x_nose = 0;
     
         % Mass
-        c.m_mass = 0.004;
+        c.m_mass = 0.009;
         c.x_mass = in_x_mass;
     
         % Front wing
@@ -118,6 +118,7 @@ function linearize_wingPosSweeper()
     x_mass_min = 0.000;
     num_stations_mass = 30;
     all_x_mass = linspace(x_mass_min, x_mass_max, num_stations_mass);
+    all_x_cg = zeros(1, num_stations_mass);
 
     % Setup wing iterations
     delta_wing_max = 0.010;
@@ -133,8 +134,9 @@ function linearize_wingPosSweeper()
         in_delta_wing = all_delta_wing(r);
         for j = 1:num_stations_mass
             in_x_mass = all_x_mass(j);
-            [~, omega_nats, damping_ratios] = findEigenvalues(in_x_mass, in_delta_wing);
-    
+            [~, omega_nats, damping_ratios, x_cg] = findEigenvalues(in_x_mass, in_delta_wing);
+            all_x_cg(j) = x_cg;
+            
             % Check if valid result
             if length(omega_nats) ~= 2
                 continue;
@@ -155,7 +157,7 @@ function linearize_wingPosSweeper()
     end
     
     % --- Generate surface plot ---
-    [X, Y] = meshgrid(all_x_mass, all_delta_wing);  % X = mass, Y = delta_wing
+    [X, Y] = meshgrid(all_x_cg, all_delta_wing);  % X = mass, Y = delta_wing
     
     figure('Position', [100, 100, 1000, 500]);
     hold on;
@@ -171,6 +173,6 @@ function linearize_wingPosSweeper()
     ylabel('\delta_{wing} (m)');
     zlabel('\zeta_{phugoid}');
     title('Phugoid Damping vs Mass and Wing Separation');
-    view(45, 30);                  % adjust view angle
+    view(135, 30);                  % adjust view angle
     grid on;
 end

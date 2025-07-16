@@ -1,5 +1,5 @@
 function linearize_massPosSweeper()
-    function [eigens, omega_nats, damping_ratios] = findEigenvalues(in_x_mass)
+    function [eigens, omega_nats, damping_ratios, x_cg] = findEigenvalues(in_x_mass)
         % --- Environmental Parameters ---
         p.g = 9.81;
         p.rho = 1.225;
@@ -113,11 +113,19 @@ function linearize_massPosSweeper()
         damping_ratios = damping_ratios(select_idxs);
     end
 
+
+    % ===========================
+    % --- MAIN FUNCTION START ---
+    % ===========================
+    graph1 = false;
+    graph2 = true;
+
     % Setup iterations
     x_max = 0.100;
     x_min = 0.000;
-    num_stations = 45;
+    num_stations = 10;
     all_x_mass = linspace(x_min, x_max, num_stations);
+    all_x_cg = zeros(1, num_stations);
 
     % Data collection arrays
     omega_short = zeros(1, num_stations);
@@ -125,10 +133,13 @@ function linearize_massPosSweeper()
 
     damp_short = zeros(1, num_stations);
     damp_phugoid = zeros(1, num_stations);
+
+    eigens_short = zeros(1, num_stations);
+    eigens_phugoid = zeros(1, num_stations);
     % Sweep across mass positions
     for j = 1:num_stations
         in_x_mass = all_x_mass(j);
-        [~, omega_nats, damping_ratios] = findEigenvalues(in_x_mass);
+        [eigens, omega_nats, damping_ratios, x_cg] = findEigenvalues(in_x_mass);
 
         if length(omega_nats) ~= 2
             fprintf("Skipping index %d, invalid eigenvalue count.\n", j);
@@ -144,48 +155,85 @@ function linearize_massPosSweeper()
             phugoid_idx = 1;
         end
 
+        % Data saving
+        all_x_cg(j) = x_cg;
         omega_short(j) = omega_nats(short_idx);
         omega_phugoid(j) = omega_nats(phugoid_idx);
         damp_short(j) = damping_ratios(short_idx);
         damp_phugoid(j) = damping_ratios(phugoid_idx);
+        eigens_short(j) = eigens(short_idx);
+        eigens_phugoid(j) = eigens(phugoid_idx);
     end
 
-    % Find instability boundary (where phugoid goes unstable)
-    instability_idx = find(damp_phugoid < 0, 1, 'first');
-    x_unstable_start = NaN;
-    if ~isempty(instability_idx)
-        x_unstable_start = all_x_mass(instability_idx);
+
+    if graph1
+        % Find instability boundary (where phugoid goes unstable)
+        instability_idx = find(damp_phugoid < 0, 1, 'first');
+        x_unstable_start = NaN;
+        if ~isempty(instability_idx)
+            x_unstable_start = all_x_cg(instability_idx);
+        end
+
+        % --- Plotting ---
+        figure('Position', [100, 100, 1000, 400]);
+        sgtitle("Flight Stability Analyses");
+    
+        % Frequency Plot
+        subplot(1, 2, 1); 
+        hold on;
+        plot(all_x_cg, omega_short, 'LineWidth', 1.5);
+        plot(all_x_cg, omega_phugoid, 'LineWidth', 1.5);
+        hold off;
+        title('Natural Frequency vs Mass Position');
+        ylabel('\omega_n (rad/s)'); xlabel('x_{mass} (m)');
+        legend("Short Mode", "Phugoid Mode", 'Location', 'northeast');
+        grid on;
+    
+        % Damping Ratio Plot
+        subplot(1, 2, 2); 
+        hold on;
+    
+        % Shade unstable phugoid region
+        if ~isnan(x_unstable_start)
+            xfill = [x_unstable_start, max(all_x_cg)];
+            fill([xfill(1), xfill(2), xfill(2), xfill(1)], [-1, -1, 1, 1], [1, 0.8, 0.8], 'EdgeColor', 'none', "FaceAlpha",0.5);
+        end
+    
+        % Plot damping curves
+        plot(all_x_cg, damp_short, 'LineWidth', 1.5);
+        plot(all_x_cg, damp_phugoid, 'LineWidth', 1.5);
+    
+        title('Damping Ratio vs Mass Position');
+        ylabel('\zeta'); xlabel('x_{mass} (m)');
+        legend("Instability Region", "Short Mode", "Phugoid Mode", 'Location', 'southeast');
+        grid on;
+        hold off;
     end
 
-    % --- Plotting ---
-    figure('Position', [100, 100, 1000, 500]);
-    sgtitle("Flight Stability Analyses");
+    if graph2
+        figure('Position', [100, 100, 1000, 400]);
+        subplot(1, 2, 1);
+        hold on;
+        plot(real(eigens_short), imag(eigens_short), 'o-', 'LineWidth', 1.5);
+        xline(0, '--k');
+        yline(0, '--k');
+        hold off;
+        axis equal;
+        xlabel('Real Part'); 
+        ylabel('Imaginary Part');
+        title('Short Mode Trajectories');
+        sgrid; 
 
-    % Frequency Plot
-    subplot(1, 2, 1); hold on;
-    plot(all_x_mass, omega_short, 'LineWidth', 1.5);
-    plot(all_x_mass, omega_phugoid, 'LineWidth', 1.5);
-    title('Natural Frequency vs Mass Position');
-    ylabel('\omega_n (rad/s)'); xlabel('x_{mass} (m)');
-    legend("Short Mode", "Phugoid Mode", 'Location', 'northeast');
-    grid on;
-
-    % Damping Ratio Plot
-    subplot(1, 2, 2); hold on;
-
-    % Shade unstable phugoid region
-    if ~isnan(x_unstable_start)
-        xfill = [x_unstable_start, x_max];
-        fill([xfill(1), xfill(2), xfill(2), xfill(1)], [-1, -1, 1, 1], [1, 0.8, 0.8], 'EdgeColor', 'none', "FaceAlpha",0.5);
+        subplot(1, 2, 2);
+        hold on;
+        plot(real(eigens_phugoid), imag(eigens_phugoid), 'x-', 'LineWidth', 1.5);
+        xline(0, '--k');
+        yline(0, '--k');
+        hold off;
+        axis equal;
+        xlabel('Real Part'); 
+        ylabel('Imaginary Part');
+        title('Phugoid Mode Trajectories');
+        sgrid; 
     end
-
-    % Plot damping curves
-    plot(all_x_mass, damp_short, 'LineWidth', 1.5);
-    plot(all_x_mass, damp_phugoid, 'LineWidth', 1.5);
-
-    title('Damping Ratio vs Mass Position');
-    ylabel('\zeta'); xlabel('x_{mass} (m)');
-    legend("Instability Region", "Short Mode", "Phugoid Mode", 'Location', 'southeast');
-    grid on;
-
 end
