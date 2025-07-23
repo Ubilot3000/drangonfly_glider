@@ -58,7 +58,7 @@ function linearize_Simulate()
     % --- Flight Parameters ---
     % Guess equilibrium conditions
 
-    v0 = 6;
+    v0 = 8;
     gamma0 = deg2rad(-5);
     theta0 = deg2rad(-6);
     q0 = 0;
@@ -69,6 +69,7 @@ function linearize_Simulate()
     ode_func = @(z) linearize_ODE(0, z, p);
     options = optimoptions('fsolve','FunctionTolerance',1e-8, 'Display',"none"); % 
     z_eq = fsolve(ode_func, z_guess, options);
+    z_eq
 
     % --- Computing Jacobian ---
     % Isolating important states
@@ -91,6 +92,7 @@ function linearize_Simulate()
 
         A(:, i) = (f1 - f2) / (2 * dz);
     end
+    
 
     % --- Eigenvalue Analysis ---
     eigs_A = eig(A);
