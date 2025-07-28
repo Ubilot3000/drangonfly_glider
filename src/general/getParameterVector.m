@@ -22,6 +22,7 @@ function p = getParameterVector(c)
     p.i_f = deg2rad(6);  % Incidence angle (rad)
     p.AR_f = 11.2;
     p.k_f = 1 / (pi * oswald_e * p.AR_f);
+    p.span_f = sqrt(p.AR_f * p.S_f);
 
     % Rear Wing
     p.S_r = 0.0084;        % Rear wing is larger
@@ -33,4 +34,8 @@ function p = getParameterVector(c)
     % Glider properties
     p.S_tot = p.S_f + p.S_r;
     p.c_bar = (sqrt(p.S_f / p.AR_f) * p.S_f + sqrt(p.S_r / p.AR_r) * p.S_r) / p.S_tot;
+    
+    % Wing interactions
+    p.delta_wings = c.x_r_wing - c.x_f_wing; 
+    p.k_wings = 8;
 end

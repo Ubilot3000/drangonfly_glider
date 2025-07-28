@@ -10,7 +10,7 @@ function [M_total] = calculateMoment(p, V, alpha)
     D_f = 0.5 * p.rho * V^2 * p.S_f * Cd_f;
     
     % Downwash
-    epsilon = (2 * Cl_f) / (pi * p.AR_f);
+    epsilon = (2 * Cl_f) / (pi * p.AR_f) * (1 / (1 + p.k_wings * (p.delta_wings / p.span_f)^2));
     
     % Rear Wing
     alpha_r_eff = alpha + p.i_r - epsilon;

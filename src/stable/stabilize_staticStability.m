@@ -1,4 +1,4 @@
-function [static_margin, neutral_point, x_cg] = stabilize_StaticStability(c)
+function [static_margin, neutral_point, x_cg] = stabilize_staticStability(c)
     % --- Variable Setup ---
     % Parameters
     p = getParameterVector(c);

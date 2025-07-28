@@ -84,7 +84,7 @@ function D_total = calculateDrag(alpha, V, p)
     Cl_f = p.Cl_a * alpha_f;
     D_f = 0.5 * p.rho * V^2 * p.S_f * (p.Cd_0 + p.k_f * Cl_f^2);
     
-    epsilon = (2 * Cl_f) / (pi * p.AR_f);
+    epsilon = (2 * Cl_f) / (pi * p.AR_f) * (1 / (1 + p.k_wings * (p.delta_wings / p.span_f)^2));
     
     alpha_r_eff = alpha + p.i_r - epsilon;
     Cl_r = p.Cl_a * alpha_r_eff;
