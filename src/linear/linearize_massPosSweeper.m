@@ -117,7 +117,7 @@ function linearize_massPosSweeper()
     % ===========================
     % --- MAIN FUNCTION START ---
     % ===========================
-    graph1 = false;
+    graph1 = true;
     graph2 = true;
 
     % Setup iterations
