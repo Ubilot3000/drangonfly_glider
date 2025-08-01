@@ -1,5 +1,5 @@
 function stabilize_staticMarginRange()
-    num_stations = 35;
+    num_stations = 45;
 
     x_mass_range = linspace(0.00, 0.190, num_stations);
     x_f_wing_range = linspace(0.030, 0.120, num_stations);

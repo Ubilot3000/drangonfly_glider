@@ -12,10 +12,12 @@ function c = getConstructionVector()
     % Front wing
     c.m_f_wing = 0.004;
     c.x_f_wing = 0.085;
+    c.i_f = deg2rad(6);
 
     % Back wing
     c.m_r_wing = 0.006;            
     c.x_r_wing = 0.140;
+    c.i_r = deg2rad(3);
 
     % Rudder
     c.m_rudder = 0.002;            

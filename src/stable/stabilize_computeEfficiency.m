@@ -1,5 +1,4 @@
-function [L_D_best, V_best] = stabilize_computeEfficiency(c)
-    p = getParameterVector(c);
+function [L_D_best, V_best] = stabilize_computeEfficiency(p)
 
     % Variable setup
     num_stations = 20; % A reasonable number for speed
@@ -45,10 +44,14 @@ function [L_D_best, V_best] = stabilize_computeEfficiency(c)
 
         % Saving values
         L_D_array(i) = L / D;
+
+        % if L < 0
+        %     fprintf("Lift is negative: %.3f\n", L);
+        %     fprintf("Crucial Values --> L_f: %.3f, L_r: %.3f, Cl_f: %.3f, Cl_r: %.3f, Alpha_f: %.3f, Alpha_r: %.3f\n", L_f, L_r, Cl_f, Cl_r, alpha_f, alpha_r_eff);
+        % end
     end
     
     % Find the best L/D and the velocity at which it occurred
-    L_D_best = max(L_D_array);
-    best_idx = (L_D_array == L_D_best);
+    [L_D_best, best_idx] = max(L_D_array);
     V_best = v_range(best_idx);
 end

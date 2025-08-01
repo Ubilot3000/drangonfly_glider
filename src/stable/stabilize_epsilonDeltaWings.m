@@ -11,7 +11,7 @@ function stabilize_epsilonDeltaWings()
 
     alpha_deg = 4; 
     Cl_f = p.Cl_a * deg2rad(alpha_deg);
-    k_wings_alt = 12;
+    k_wings_alt = 0.8;
     k_wings_alt_2 = 6;
     
     % Epsilon for each delta

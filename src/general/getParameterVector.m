@@ -19,7 +19,7 @@ function p = getParameterVector(c)
     % Front Wing
     p.S_f = 0.007;        % Wing area (m^2)
     p.x_f_wing = c.x_f_wing;
-    p.i_f = deg2rad(6);  % Incidence angle (rad)
+    p.i_f = c.i_f;  % Incidence angle (rad)
     p.AR_f = 11.2;
     p.k_f = 1 / (pi * oswald_e * p.AR_f);
     p.span_f = sqrt(p.AR_f * p.S_f);
@@ -27,7 +27,7 @@ function p = getParameterVector(c)
     % Rear Wing
     p.S_r = 0.0084;        % Rear wing is larger
     p.x_r_wing = c.x_r_wing;
-    p.i_r = deg2rad(3);
+    p.i_r = c.i_r;
     p.AR_r = 9.33;
     p.k_r = 1 / (pi * oswald_e * p.AR_r);
 
