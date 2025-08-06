@@ -37,5 +37,5 @@ function p = getParameterVector(c)
     
     % Wing interactions
     p.delta_wings = c.x_r_wing - c.x_f_wing; 
-    p.k_wings = 8;
+    p.k_wings = 0.274;
 end

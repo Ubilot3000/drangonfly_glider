@@ -9,10 +9,11 @@ function stabilize_epsilonDeltaWings()
     c = getConstructionVector();
     p = getParameterVector(c);
 
-    alpha_deg = 4; 
+    alpha_deg = 1; 
     Cl_f = p.Cl_a * deg2rad(alpha_deg);
-    k_wings_alt = 0.8;
-    k_wings_alt_2 = 6;
+    k_wings_alt = 0.374;
+    k_wings_alt_2 = 0.173;
+    p.k_wings = 0.274;
     
     % Epsilon for each delta
     for i = 1:length(delta_range)
@@ -34,6 +35,6 @@ function stabilize_epsilonDeltaWings()
     xlabel('Wing Spacing \delta (m)');
     ylabel('Downwash Angle \epsilon (degrees)');
     title(sprintf('Downwash Angle vs Wing Spacing at \\alpha = %d^\\circ', alpha_deg));
-    legend(["Old Model","K = 6", "K = 8", "K = 12"]);
+    legend(["Old Model",num2str(k_wings_alt_2), num2str(p.k_wings), num2str(k_wings_alt)]);
     grid on;
 end

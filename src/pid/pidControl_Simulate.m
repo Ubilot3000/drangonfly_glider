@@ -51,7 +51,7 @@ function pidControl_Simulate()
 
     % --- Controller Parameters ---
     % Gains and command
-    ctrl.theta_goal = deg2rad(-30); % goal theta
+    ctrl.theta_goal = deg2rad(0); % goal theta
     ctrl.Kp = 0.7;
     ctrl.Ki = 0.45;
     ctrl.Kd = 1.4;
@@ -89,15 +89,21 @@ function pidControl_Simulate()
         error_dot = 0 - z(i,6); % q is the rate of change of theta
         error_int = z(i,7);
         x_mass_cmd = ctrl.Kp * error_prp + ctrl.Ki * error_int + ctrl.Kd * error_dot;
-        x_mass_signal(i) = max(ctrl.x_mass_min, min(ctrl.x_mass_max, x_mass_cmd)); % Saturate
+        c = getConstructionVector();
+        c.x_mass = x_mass_cmd;
+        p = getParameterVector(c);
+        x_mass_signal(i) = p.x_cg;
+        % x_mass_signal(i) = max(ctrl.x_mass_min, min(ctrl.x_mass_max, x_mass_cmd)); % Saturate
     end
 
     figure('Position', [100, 100, 800, 600]);
     
     subplot(2,1,1);
-    plot(t, x_mass_signal * 1000, 'LineWidth', 2);
+    plot(t, x_mass_signal / c.L_rod * 100, 'LineWidth', 2);
     title('PID Controller Output');
-    xlabel('Time (s)'); ylabel('Commanded Mass Position (mm)'); grid on;
+    xlabel('Time (s)'); 
+    ylabel('C.G. Position (% of Fuselage Length)'); 
+    grid on;
 
     subplot(2,1,2);
     plot(t, rad2deg(theta), 'LineWidth', 2);

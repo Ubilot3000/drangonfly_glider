@@ -1,6 +1,11 @@
 function [L_total, D_total] = calculateAeroForces(alpha, v, p)
     % This local function calculates the Lift and Drag
-     % Front Wing
+    % Output
+    %   L_total: lift
+    %   D_total: drag
+
+
+    % Front Wing
     alpha_f = alpha + p.i_f;
 
     Cl_f = p.Cl_a * alpha_f;

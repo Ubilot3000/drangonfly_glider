@@ -67,19 +67,29 @@ function stabilize_staticMarginRange()
     % Plot the plane
     figure('Position', [100, 100, 1000, 700]);
     hold on;
-    scatter3(X_cg, X_f, X_r, 36, SM, 'filled', MarkerFaceAlpha=0.1);
-    scatter3(X_cg(mask), X_f(mask), X_r(mask), 60, 'red', 'x', 'LineWidth', 1.5);
-    scatter3(p.x_cg, c.x_f_wing, c.x_r_wing, 60, "black", "x", "LineWidth", 3);
+    scatter3(X_cg / c.L_rod * 100, X_f / c.L_rod * 100, X_r / c.L_rod * 100, 36, SM, 'filled', MarkerFaceAlpha=0.1);
+    scatter3(X_cg(mask) / c.L_rod * 100, X_f(mask) / c.L_rod * 100, X_r(mask) / c.L_rod * 100, 60, 'red', "filled", 'LineWidth', 1.5);
+    scatter3(p.x_cg / c.L_rod * 100, c.x_f_wing / c.L_rod * 100, c.x_r_wing / c.L_rod * 100, 60, "black", "x", "LineWidth", 3);
     h1 = scatter3(NaN, NaN, NaN, 60, 'red', 'x', 'LineWidth', 1.5, 'DisplayName', 'Static Margin \approx 10%');
     h2 = scatter3(NaN, NaN, NaN, 60, 'black', 'x', 'LineWidth', 3, 'DisplayName', 'Current Static Margin');
     hold off;
-    xlabel('x_{cg} (mm)');
-    ylabel('x_{front wing} (mm)');
-    zlabel('x_{rear wing} (mm)');
+    xlabel('x_{cg} (% Fuselage Length)');
+    ylabel('x_{front wing} (% Fuselage Length)');
+    zlabel('x_{rear wing} (% Fuselage Length)');
     title('Static Margin vs Component Positions');
     colormap parula;
     colorbar;
     legend([h1, h2]);
     grid on;
     view(135, 30);
+
+    % 2D slices
+
+    % cg_slice = 0.110;
+    % idxs = (abs(X_cg - cg_slice) < 0.010);
+    % figure("Position", [100, 100, 1000, 700]);
+    % hold on;
+    % scatter(X_f(idxs), X_r(idxs), 36, SM(idxs), "filled");
+    % hold off;
+    
 end
