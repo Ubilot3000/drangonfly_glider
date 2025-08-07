@@ -40,6 +40,12 @@ function linearize_eigenTester()
         [~, idx3] = sort(abs(imag(e3)));
         e3 = e3(idx3);
 
+        % disp(e1);
+        % disp(real(e1(1)));
+        if real(e1(1)) >= 0
+            fprintf("CG: %.3fmm unstable with: %d\n", target_x_cg * 100, real(e1(1)));
+        end
+
         % store as columns
         eigs1(:,i) = e1;
         eigs2(:,i) = e2;

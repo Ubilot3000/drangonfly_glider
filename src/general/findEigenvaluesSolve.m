@@ -1,5 +1,5 @@
 function [eigs, trim, ok] = findEigenvaluesSolve(p, v_guess)
-    % FIND EIGENVALUES VIA FSOLVE + NUMERIC JACOBIAN
+    % Finds equilibrium condition of for anglular variables AND velocity.
     %
     % Inputs:
     %   p       struct of aircraft params
@@ -14,10 +14,12 @@ function [eigs, trim, ok] = findEigenvaluesSolve(p, v_guess)
     opts = optimoptions('fsolve', ...
         'Display','off', ...
         'FunctionTolerance',1e-8, ...
-        'StepTolerance',1e-8);
-    % unknowns: x = [V; alpha; gamma]
+        'StepTolerance',1e-8...
+        );
+    
+    % unknowns: x = [v_guess; alpha; gamma]
     x0    = [v_guess; deg2rad(3); 0];
-    [xsol,~,exitflag] = fsolve(@equations, x0, opts);
+    [xsol, ~, exitflag] = fsolve(@equations, x0, opts);
     
     if exitflag > 0
         V0     = xsol(1);
@@ -33,9 +35,8 @@ function [eigs, trim, ok] = findEigenvaluesSolve(p, v_guess)
     
     %--- build trim struct & state
     theta0 = alpha0 + gamma0;
-    q0     = 0;
-    trim   = struct('V',V0, 'alpha',alpha0, 'gamma',gamma0, ...
-        'theta',theta0, 'q',q0);
+    q0 = 0;
+    trim = struct('V', V0, 'alpha', alpha0, 'gamma', gamma0, 'theta', theta0, 'q', q0);
     
     x_eq = [V0; gamma0; theta0; q0];
     
@@ -47,47 +48,51 @@ function [eigs, trim, ok] = findEigenvaluesSolve(p, v_guess)
     
     
     % nested: your three trim equations
-        function F = equations(x)
-            V     = x(1);
-            alpha = x(2);
-            gamma = x(3);
-            M     = calculateMoment(p, V, alpha);
-            [L,D] = calculateAeroForces(alpha, V, p);
-            Vdot    = -D/p.m_total - p.g*sin(gamma);
-            gammadot=  L/(p.m_total*V) - p.g*cos(gamma)/V;
-            F = [ M; Vdot; gammadot ];
-        end
-    
+    function F = equations(x)
+        V     = x(1);
+        alpha = x(2);
+        gamma = x(3);
+        M     = calculateMoment(p, V, alpha);
+        [L,D] = calculateAeroForces(alpha, V, p);
+        Vdot    = -D/p.m_total - p.g*sin(gamma);
+        gammadot=  L/(p.m_total*V) - p.g*cos(gamma)/V;
+        F = [ M; Vdot; gammadot ];
+    end
+
     % nested: full state derivative
-        function dx = stateDeriv(x)
-            V     = x(1);
-            gamma = x(2);
-            theta = x(3);
-            q     = x(4);
-            alpha = theta - gamma;
-            [L,D] = calculateAeroForces(alpha, V, p);
-            M     = calculateMoment(p, V, alpha);
-            dx = [ ...
-                -D/p.m_total - p.g*sin(gamma);             % Vdot
-                L/(p.m_total*V) - p.g*cos(gamma)/V;         % gammadot
-                q;                                          % thetadot
-                M/p.I_total                                % qdot
-                ];
+    function dx = stateDeriv(x)
+        % unpacking variables
+        V = x(1);
+        gamma = x(2);
+        theta = x(3);
+        q = x(4);
+        alpha = theta - gamma;
+        
+        % Calculating derivatives
+        [L,D] = calculateAeroForces(alpha, V, p);
+        M = calculateMoment(p, V, alpha);
+
+        % Compiling results
+        dx = [-D/p.m_total - p.g*sin(gamma);             % Vdot
+            L/(p.m_total*V) - p.g*cos(gamma)/V;         % gammadot
+            q;                                          % thetadot
+            M/p.I_total                                % qdot
+            ];
+    end
+
+% nested: central‐difference Jacobian
+    function J = numericJacobian(fun, x0)
+        eps0 = 1e-6;
+        n = numel(x0);
+        J = zeros(n);
+        for i = 1:n
+            h = eps0 * max(abs(x0(i)),1);
+            xp = x0;  xm = x0;
+            xp(i) = xp(i) + h;
+            xm(i) = xm(i) - h;
+            fp = fun(xp);
+            fm = fun(xm);
+            J(:,i) = (fp - fm) / (2*h);
         end
-    
-    % nested: central‐difference Jacobian
-        function J = numericJacobian(fun, x0)
-            eps0 = 1e-6;
-            n    = numel(x0);
-            J    = zeros(n);
-            for i = 1:n
-                h      = eps0 * max(abs(x0(i)),1);
-                xp     = x0;  xm = x0;
-                xp(i)  = xp(i) + h;
-                xm(i)  = xm(i) - h;
-                fp     = fun(xp);
-                fm     = fun(xm);
-                J(:,i) = (fp - fm) / (2*h);
-            end
-        end
+    end
 end

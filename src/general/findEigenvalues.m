@@ -1,4 +1,15 @@
 function [eigens, omega_nats, damping_ratios] = findEigenvalues(p, v0)
+    % Finds eigenvalues based off simplified textbook example linearized
+    % system. Uses the isolated and decoupled Phugoid and Short Period
+    % matrixes.
+    % 
+    % First finds trim conditon at a given velocity and then uses the
+    % construction information to determine all other quantities.
+    % 
+    % Output:
+    %   eigens
+    %   omega_nats
+    %   damping_ratios
    
     % Finding alpha and forces at trim condition
     [alpha_trim, ~] = findTrimCondition(v0, p);
